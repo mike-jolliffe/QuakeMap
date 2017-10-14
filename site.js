@@ -57,13 +57,13 @@ var styles = {
 
 function renderMap(data) {
     var vectorSource = new ol.source.Vector({
-    features: data,
-    wrapX: false
+        features: data,
+        wrapX: false
     });
     var vector = new ol.layer.Vector({
         source: vectorSource,
         style: function (feature) {
-            return styles[feature.get('size')];
+            return styles['10'];
         }
     });
 
@@ -95,26 +95,41 @@ function renderMap(data) {
     });
 
 
-    map.on('singleclick', function(evt) {
-        vector.style = (styles['10']);
-        var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
-        //you can add a condition on layer to restrict the listener
-        return feature.setStyle(styles['20']);
+    map.on('pointermove', function (evt) {
+        var feature = map.forEachFeatureAtPixel(evt.pixel, function (ft, layer) {
+            //you can add a condition on layer to restrict the listener
+            return ft //.setStyle(styles['20']);
         });
-        if (feature) {
-            //here you can add you code to display the coordinates or whatever you want to do
-            content.innerHTML = '<p>You clicked a feature</p>'
-        }
 
-        // var coordinate = evt.coordinate;
-        // var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
-        //     coordinate, 'EPSG:3857', 'EPSG:4326'));
-        //
-        // content.innerHTML = '<p>You clicked here:</p><code>' + hdms +
-        //     '</code>';
-        // overlay.setPosition(coordinate);
-      });
+        if (feature) {
+            hovered = true;
+            feature.setStyle(styles['20']);
+            removeOthersStyle(feature);
+        } else {
+            removeallFeaturesStyle();
+        }
+    });
+
+    //set a global reference to loop only if needed
+    var hovered = false;
+    function removeallFeaturesStyle(){
+        //continue only if needed
+        if(!hovered) return;
+
+        vectorSource.getFeatures().forEach(function(feature){
+            feature.setStyle(null);
+        });
+        hovered = false;
+    }
+
+    function removeOthersStyle(feature){
+        vectorSource.getFeatures().forEach(function(ft){
+            //don't remove from the current hovering
+
+        });
+    }
 }
+
 
 getData();
 
