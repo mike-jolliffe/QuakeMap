@@ -1,4 +1,4 @@
-
+var map;
 
 // AJAX GET request for earthquakes
 function getData() {
@@ -6,12 +6,14 @@ function getData() {
         type: "GET",
         url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson",
         success: function(resp) {
-            parseResponse(resp)
+            console.log(resp);
+            parseResponse(resp, renderMap);
         }
     })
 }
 
-function parseResponse(data) {
+// Get points
+function parseResponse(data, callback) {
     var coords = [];
     var points = new Array(data.features.length - 1);
     for (var i = 0; i < data.features.length - 1; i++) {
@@ -32,29 +34,31 @@ function parseResponse(data) {
             'size': 10
         });
     }
+    callback(points)
+}
 
-    // Marker style
-    var styles = {
-        '10': new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 5,
-                fill: new ol.style.Fill({color: '#666666'}),
-                stroke: new ol.style.Stroke({color: '#bada55', width: 1})
-            })
-        }),
-        '20': new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 10,
-                fill: new ol.style.Fill({color: '#666666'}),
-                stroke: new ol.style.Stroke({color: '#bada55', width: 1})
-            })
+// Marker style
+var styles = {
+    '10': new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({color: '#666666'}),
+            stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
-    };
+    }),
+    '20': new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 10,
+            fill: new ol.style.Fill({color: '#666666'}),
+            stroke: new ol.style.Stroke({color: '#bada55', width: 1})
+        })
+    })
+};
 
-
+function renderMap(data) {
     var vectorSource = new ol.source.Vector({
-        features: points,
-        wrapX: false
+    features: data,
+    wrapX: false
     });
     var vector = new ol.layer.Vector({
         source: vectorSource,
@@ -63,22 +67,67 @@ function parseResponse(data) {
         }
     });
 
+    // Anchor pop-up to map
+    var container = document.getElementById('popup');
+    var content = document.getElementById('popup-content');
+    var closer = $('#popup-closer');
+
+    var overlay = new ol.Overlay(({
+        element: container,
+        autoPan: true,
+        autoPanAnimation: {
+            duration: 250
+        }
+    }));
+
     // MAP
-    var map = new ol.Map({
+    map = new ol.Map({
         layers: [
             new ol.layer.Tile({source: new ol.source.OSM()}),
             vector
         ],
-        target: document.getElementById('map'),
+        overlays: [overlay],
+        target: 'map',
         view: new ol.View({
             center: ol.proj.fromLonLat([-112.5, 45.6]),
             zoom: 4
         })
     });
+
+    map.on('singleclick', function(evt) {
+    var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        //you can add a condition on layer to restrict the listener
+        return feature;
+        });
+    if (feature) {
+        //here you can add you code to display the coordinates or whatever you want to do
+
+    }
+    });
+
+    map.on('singleclick', function(evt) {
+        var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        //you can add a condition on layer to restrict the listener
+        return feature;
+        });
+        if (feature) {
+            //here you can add you code to display the coordinates or whatever you want to do
+            content.innerHTML = '<p>You clicked a feature</p>'
+        }
+
+        // var coordinate = evt.coordinate;
+        // var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+        //     coordinate, 'EPSG:3857', 'EPSG:4326'));
+        //
+        // content.innerHTML = '<p>You clicked here:</p><code>' + hdms +
+        //     '</code>';
+        // overlay.setPosition(coordinate);
+      });
 }
-// //
-//
+
 getData();
+
+
 
 
 
@@ -99,3 +148,20 @@ getData();
 
 // TODO animate "new" earthquakes somehow
 // TODO create a project readme
+
+// // Click handler to close pop-up
+// closer.onclick = function() {
+//     overlay.setPosition(undefined);
+//     closer.blur();
+//     return false;
+// };
+
+// Click handler to render pop-up
+// map.on('singleclick', function(evt) {
+//     var coordinate = evt.coordinate;
+//     var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+//             coordinate, 'EPSG:3857', 'EPSG:4326'));
+//
+//         content.innerHTML = '<p>' + "You clicked here: " + '</p>';
+//         overlay.setPosition(coordinate);
+//       });
