@@ -94,21 +94,12 @@ function renderMap(data) {
         })
     });
 
-    map.on('singleclick', function(evt) {
-    var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
-        //you can add a condition on layer to restrict the listener
-        return feature;
-        });
-    if (feature) {
-        //here you can add you code to display the coordinates or whatever you want to do
-
-    }
-    });
 
     map.on('singleclick', function(evt) {
+        vector.style = (styles['10']);
         var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
         //you can add a condition on layer to restrict the listener
-        return feature;
+        return feature.setStyle(styles['20']);
         });
         if (feature) {
             //here you can add you code to display the coordinates or whatever you want to do
