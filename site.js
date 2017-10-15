@@ -30,6 +30,10 @@ function parseResponse(data, callback) {
         points[i] = new ol.Feature({
             'geometry': new ol.geom.Point(
                 [coords[i][0], coords[i][1]]),
+            'attributes': {
+                'magnitude': magnitude,
+                'evtTime': data.features[i].properties.time
+            },
             'i': i,
             'size': getSize(magnitude)
         });
@@ -41,14 +45,14 @@ function parseResponse(data, callback) {
 var styles = {
     '10': new ol.style.Style({
         image: new ol.style.Circle({
-            radius: 2,
+            radius: 3,
             fill: new ol.style.Fill({color: '#666666'}),
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
     }),
     '20': new ol.style.Style({
         image: new ol.style.Circle({
-            radius: 5,
+            radius: 6,
             fill: new ol.style.Fill({color: '#666666'}),
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
@@ -66,8 +70,8 @@ var styles = {
             fill: new ol.style.Fill({color: '#bada55'}),
             stroke: new ol.style.Stroke({color: '#666666', width: 2})
         })
-    }),
-}
+    })
+};
 
 function getSize(magData) {
     if (magData < 1) {
@@ -95,7 +99,7 @@ function renderMap(data) {
     // Anchor pop-up to map
     var container = document.getElementById('popup');
     var content = document.getElementById('popup-content');
-    var closer = $('#popup-closer');
+    var closer = document.getElementById('popup-closer');
 
     var overlay = new ol.Overlay(({
         element: container,
@@ -153,6 +157,24 @@ function renderMap(data) {
 
         });
     }
+
+    closer.onclick = function() {
+        overlay.setPosition(undefined);
+        closer.blur();
+        return false;
+      };
+
+    map.on('singleclick', function(evt) {
+        var feature = map.forEachFeatureAtPixel(evt.pixel, function (ft, layer) {
+            //you can add a condition on layer to restrict the listener
+            return ft
+        });
+        var mag = feature.getProperties().attributes.magnitude;
+        var tm = feature.getProperties().attributes.evtTime;
+        content.innerHTML = '<span>Magnitude: </span><code>' + mag + '</code><br>' +
+                            '<span>Event Time: </span><code>' + tm + '</code>';
+        overlay.setPosition(evt.coordinate)
+    });
 }
 
 
@@ -168,12 +190,11 @@ getData();
         // quake magnitude
         // time of event
     // Create a point from a given event
-        // Point size corresponds to magnitude
         // Point opacity corresponds to event time away from current time, opaque smaller number
         // Reproject the point for display
-    // Display points as vectorTiles?
-        // Show magnitude of event in circle on hover
-        // Change circle size based on zoom level?
+    // Create callout box on click
+        // Show magnitude of event
+        // Show date of event
 
 // TODO make a call to the USGS GeoJSON every five minutes
 
