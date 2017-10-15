@@ -23,7 +23,7 @@ function parseResponse(data, callback) {
         coords.push(ol.proj.fromLonLat([data.features[i].geometry.coordinates[0],
                 data.features[i].geometry.coordinates[1]],
             'EPSG:3857'));
-        //var magnitude = data.features[i].properties.mag;
+        var magnitude = data.features[i].properties.mag;
         //var evntTime = data.features[i].properties.time
 
         // Create new feature from each lon/lat pair
@@ -31,7 +31,7 @@ function parseResponse(data, callback) {
             'geometry': new ol.geom.Point(
                 [coords[i][0], coords[i][1]]),
             'i': i,
-            'size': 10
+            'size': getSize(magnitude)
         });
     }
     callback(points)
@@ -41,19 +41,44 @@ function parseResponse(data, callback) {
 var styles = {
     '10': new ol.style.Style({
         image: new ol.style.Circle({
-            radius: 5,
+            radius: 2,
             fill: new ol.style.Fill({color: '#666666'}),
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
     }),
     '20': new ol.style.Style({
         image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({color: '#666666'}),
+            stroke: new ol.style.Stroke({color: '#bada55', width: 1})
+        })
+    }),
+    '30': new ol.style.Style({
+        image: new ol.style.Circle({
             radius: 10,
             fill: new ol.style.Fill({color: '#666666'}),
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
-    })
-};
+    }),
+    '40': new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 10,
+            fill: new ol.style.Fill({color: '#bada55'}),
+            stroke: new ol.style.Stroke({color: '#666666', width: 2})
+        })
+    }),
+}
+
+function getSize(magData) {
+    if (magData < 1) {
+        return 10
+    } else if (magData < 3) {
+        return 20
+    } else {
+        return 30
+    }
+}
+
 
 function renderMap(data) {
     var vectorSource = new ol.source.Vector({
@@ -63,7 +88,7 @@ function renderMap(data) {
     var vector = new ol.layer.Vector({
         source: vectorSource,
         style: function (feature) {
-            return styles['10'];
+            return styles[feature.get('size')];
         }
     });
 
@@ -103,7 +128,7 @@ function renderMap(data) {
 
         if (feature) {
             hovered = true;
-            feature.setStyle(styles['20']);
+            feature.setStyle(styles['40']);
             removeOthersStyle(feature);
         } else {
             removeallFeaturesStyle();
