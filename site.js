@@ -170,9 +170,10 @@ function renderMap(data) {
             return ft
         });
         var mag = feature.getProperties().attributes.magnitude;
-        var tm = feature.getProperties().attributes.evtTime;
+        var tm = new Date(feature.getProperties().attributes.evtTime);
+        var new_tm = (tm.getMonth()+1) + '/' + tm.getDate() + '/' + tm.getFullYear();
         content.innerHTML = '<span>Magnitude: </span><code>' + mag + '</code><br>' +
-                            '<span>Event Time: </span><code>' + tm + '</code>';
+                            '<span>Event Time: </span><code>' + new_tm + '</code>';
         overlay.setPosition(evt.coordinate)
     });
 }
