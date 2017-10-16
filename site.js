@@ -60,22 +60,22 @@ var styles = {
     '10': new ol.style.Style({
         image: new ol.style.Circle({
             radius: 3,
-            //fill: new ol.style.Fill({color: [126, 126, 126, feature.get('opacity')]}), //TODO opacity
-            stroke: new ol.style.Stroke({color: '#bada55', width: 1})
+            //fill: new ol.style.Fill({color: [126, 126, 126, feature.get('opacity')]}),
+            stroke: new ol.style.Stroke({color: '#bada55', width: 2})
         })
     }),
     '20': new ol.style.Style({
         image: new ol.style.Circle({
             radius: 6,
             //fill: new ol.style.Fill({color: '#666666'}),
-            stroke: new ol.style.Stroke({color: '#bada55', width: 1})
+            stroke: new ol.style.Stroke({color: '#bada55', width: 2})
         })
     }),
     '30': new ol.style.Style({
         image: new ol.style.Circle({
             radius: 10,
             //fill: new ol.style.Fill({color: '#666666'}),
-            stroke: new ol.style.Stroke({color: '#bada55', width: 1})
+            stroke: new ol.style.Stroke({color: '#bada55', width: 2})
         })
     }),
     '40': new ol.style.Style({
@@ -102,7 +102,7 @@ function getSize(magData) {
 function getOpacity(time) {
     var week = 6.048e8;
     var now = (new Date).getTime();
-    var opacity = 1 - ((now - time) / week) / 1.5;
+    var opacity = 1 - ((now - time) / week) / 1.75;
     return opacity
 }
 
@@ -121,7 +121,7 @@ function renderMap(data) {
             color[3] = opacity;  // change the alpha of the color
             var size = new ol.style.Style({
                 image: new ol.style.Circle({
-                    radius: feature.get('size'),
+                    radius: feature.get('size') * Math.pow(map.getView().getZoom(), 1.2) / 5,
                     fill: new ol.style.Fill({color: color}),
                     stroke: new ol.style.Stroke({color: '#bada55', width: 1})
                 })
