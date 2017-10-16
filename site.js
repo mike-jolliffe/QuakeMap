@@ -1,4 +1,15 @@
-var map;
+var map = new ol.Map({
+        layers: [
+            new ol.layer.Tile({source: new ol.source.OSM()}),
+        ],
+        target: 'map',
+        view: new ol.View({
+            center: ol.proj.fromLonLat([-112.5, 45.6]),
+            zoom: 4
+        })
+    });
+
+var vectorSource = false;
 
 // AJAX GET request for earthquakes
 function getData() {
@@ -6,7 +17,9 @@ function getData() {
         type: "GET",
         url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson",
         success: function(resp) {
-            console.log(resp);
+            if (vectorSource) {
+                vectorSource.clear()
+            }
             parseResponse(resp, renderMap);
         }
     })
@@ -24,7 +37,6 @@ function parseResponse(data, callback) {
                 data.features[i].geometry.coordinates[1]],
             'EPSG:3857'));
         var magnitude = data.features[i].properties.mag;
-        //var evntTime = data.features[i].properties.time
 
         // Create new feature from each lon/lat pair
         points[i] = new ol.Feature({
@@ -85,7 +97,7 @@ function getSize(magData) {
 
 
 function renderMap(data) {
-    var vectorSource = new ol.source.Vector({
+    vectorSource = new ol.source.Vector({
         features: data,
         wrapX: false
     });
@@ -110,18 +122,8 @@ function renderMap(data) {
     }));
 
     // MAP
-    map = new ol.Map({
-        layers: [
-            new ol.layer.Tile({source: new ol.source.OSM()}),
-            vector
-        ],
-        overlays: [overlay],
-        target: 'map',
-        view: new ol.View({
-            center: ol.proj.fromLonLat([-112.5, 45.6]),
-            zoom: 4
-        })
-    });
+    map.addLayer(vector);
+    map.addOverlay(overlay);
 
 
     map.on('pointermove', function (evt) {
@@ -178,18 +180,15 @@ function renderMap(data) {
     });
 }
 
-
 getData();
+// Refresh every 5ish minutes
+setInterval(getData, 320000);
 
 
 
 
 
 // TODO Add all points from a single USGS GeoJSON file into OL
-    // Parse geoJSON
-        // lat/long,
-        // quake magnitude
-        // time of event
     // Create a point from a given event
         // Point opacity corresponds to event time away from current time, opaque smaller number
         // Reproject the point for display
@@ -197,24 +196,5 @@ getData();
         // Show magnitude of event
         // Show date of event
 
-// TODO make a call to the USGS GeoJSON every five minutes
-
 // TODO animate "new" earthquakes somehow
 // TODO create a project readme
-
-// // Click handler to close pop-up
-// closer.onclick = function() {
-//     overlay.setPosition(undefined);
-//     closer.blur();
-//     return false;
-// };
-
-// Click handler to render pop-up
-// map.on('singleclick', function(evt) {
-//     var coordinate = evt.coordinate;
-//     var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
-//             coordinate, 'EPSG:3857', 'EPSG:4326'));
-//
-//         content.innerHTML = '<p>' + "You clicked here: " + '</p>';
-//         overlay.setPosition(coordinate);
-//       });
