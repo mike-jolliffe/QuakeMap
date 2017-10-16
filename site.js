@@ -1,13 +1,13 @@
 var map = new ol.Map({
-        layers: [
-            new ol.layer.Tile({source: new ol.source.OSM()}),
-        ],
-        target: 'map',
-        view: new ol.View({
-            center: ol.proj.fromLonLat([-112.5, 45.6]),
-            zoom: 4
-        })
-    });
+    layers: [
+        new ol.layer.Tile({source: new ol.source.OSM()}),
+    ],
+    target: 'map',
+    view: new ol.View({
+        center: ol.proj.fromLonLat([-112.5, 45.6]),
+        zoom: 4
+    })
+});
 
 var vectorSource = false;
 
@@ -16,7 +16,7 @@ function getData() {
     $.ajax({
         type: "GET",
         url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson",
-        success: function(resp) {
+        success: function (resp) {
             if (vectorSource) {
                 vectorSource.clear()
             }
@@ -87,6 +87,7 @@ var styles = {
     })
 };
 
+// Standardize magnitude of events in three categories
 function getSize(magData) {
     if (magData < 1) {
         return 10
@@ -97,10 +98,11 @@ function getSize(magData) {
     }
 }
 
+// Convert freshness of quake to opacity
 function getOpacity(time) {
     var week = 6.048e8;
     var now = (new Date).getTime();
-    var opacity = 1 - ((now - time) / week) / 2;
+    var opacity = 1 - ((now - time) / week) / 1.5;
     return opacity
 }
 
@@ -109,18 +111,22 @@ function renderMap(data) {
         features: data,
         wrapX: false
     });
+
     var vector = new ol.layer.Vector({
         source: vectorSource,
         style: function (feature) {
-            var opacity = feature.get('opacity');
-            // TODO logging to get to 'opacity'
-            console.log(opacity);  // TODO resolve why opacity is undefined
-            var size = styles[feature.get('size')];
-            var color = ol.color.asArray('#666666');
-            color = color.slice();
+            var opacity = feature.get('attributes').opacity.toFixed(2);
+            var color = new ol.color.asArray('#222222');
+            //color = color.slice();
             color[3] = opacity;  // change the alpha of the color
-            size.setFill(color);
-            return size;
+            var size = new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: feature.get('size'),
+                    fill: new ol.style.Fill({color: color}),
+                    stroke: new ol.style.Stroke({color: '#bada55', width: 1})
+                })
+            });
+        return size
         }
     });
 
@@ -159,39 +165,40 @@ function renderMap(data) {
 
     //set a global reference to loop only if needed
     var hovered = false;
-    function removeallFeaturesStyle(){
-        //continue only if needed
-        if(!hovered) return;
 
-        vectorSource.getFeatures().forEach(function(feature){
+    function removeallFeaturesStyle() {
+        //continue only if needed
+        if (!hovered) return;
+
+        vectorSource.getFeatures().forEach(function (feature) {
             feature.setStyle(null);
         });
         hovered = false;
     }
 
-    function removeOthersStyle(feature){
-        vectorSource.getFeatures().forEach(function(ft){
+    function removeOthersStyle(feature) {
+        vectorSource.getFeatures().forEach(function (ft) {
             //don't remove from the current hovering
 
         });
     }
 
-    closer.onclick = function() {
+    closer.onclick = function () {
         overlay.setPosition(undefined);
         closer.blur();
         return false;
-      };
+    };
 
-    map.on('singleclick', function(evt) {
+    map.on('singleclick', function (evt) {
         var feature = map.forEachFeatureAtPixel(evt.pixel, function (ft, layer) {
             //you can add a condition on layer to restrict the listener
             return ft
         });
         var mag = feature.getProperties().attributes.magnitude;
         var tm = new Date(feature.getProperties().attributes.evtTime);
-        var new_tm = (tm.getMonth()+1) + '/' + tm.getDate() + '/' + tm.getFullYear();
+        var new_tm = (tm.getMonth() + 1) + '/' + tm.getDate() + '/' + tm.getFullYear();
         content.innerHTML = '<span>Magnitude: </span><code>' + mag + '</code><br>' +
-                            '<span>Event Time: </span><code>' + new_tm + '</code>';
+            '<span>Event Time: </span><code>' + new_tm + '</code>';
         overlay.setPosition(evt.coordinate)
     });
 }
@@ -199,9 +206,6 @@ function renderMap(data) {
 getData();
 // Refresh every 5ish minutes
 setInterval(getData, 320000);
-
-
-
 
 
 // TODO Modify point opacity corresponds to event time away from current time, opaque smaller number
