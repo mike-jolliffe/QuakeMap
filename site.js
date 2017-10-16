@@ -37,6 +37,7 @@ function parseResponse(data, callback) {
                 data.features[i].geometry.coordinates[1]],
             'EPSG:3857'));
         var magnitude = data.features[i].properties.mag;
+        var evtTime = data.features[i].properties.time;
 
         // Create new feature from each lon/lat pair
         points[i] = new ol.Feature({
@@ -44,10 +45,11 @@ function parseResponse(data, callback) {
                 [coords[i][0], coords[i][1]]),
             'attributes': {
                 'magnitude': magnitude,
-                'evtTime': data.features[i].properties.time
+                'evtTime': evtTime,
+                'opacity': getOpacity(evtTime)
             },
             'i': i,
-            'size': getSize(magnitude)
+            'size': getSize(magnitude)  // TODO make this dynamic with styles so dots grow on zoom
         });
     }
     callback(points)
@@ -58,21 +60,21 @@ var styles = {
     '10': new ol.style.Style({
         image: new ol.style.Circle({
             radius: 3,
-            fill: new ol.style.Fill({color: '#666666'}),
+            //fill: new ol.style.Fill({color: [126, 126, 126, feature.get('opacity')]}), //TODO opacity
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
     }),
     '20': new ol.style.Style({
         image: new ol.style.Circle({
             radius: 6,
-            fill: new ol.style.Fill({color: '#666666'}),
+            //fill: new ol.style.Fill({color: '#666666'}),
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
     }),
     '30': new ol.style.Style({
         image: new ol.style.Circle({
             radius: 10,
-            fill: new ol.style.Fill({color: '#666666'}),
+            //fill: new ol.style.Fill({color: '#666666'}),
             stroke: new ol.style.Stroke({color: '#bada55', width: 1})
         })
     }),
@@ -95,6 +97,12 @@ function getSize(magData) {
     }
 }
 
+function getOpacity(time) {
+    var week = 6.048e8;
+    var now = (new Date).getTime();
+    var opacity = 1 - ((now - time) / week) / 2;
+    return opacity
+}
 
 function renderMap(data) {
     vectorSource = new ol.source.Vector({
@@ -104,7 +112,15 @@ function renderMap(data) {
     var vector = new ol.layer.Vector({
         source: vectorSource,
         style: function (feature) {
-            return styles[feature.get('size')];
+            var opacity = feature.get('opacity');
+            // TODO logging to get to 'opacity'
+            console.log(opacity);  // TODO resolve why opacity is undefined
+            var size = styles[feature.get('size')];
+            var color = ol.color.asArray('#666666');
+            color = color.slice();
+            color[3] = opacity;  // change the alpha of the color
+            size.setFill(color);
+            return size;
         }
     });
 
@@ -188,13 +204,6 @@ setInterval(getData, 320000);
 
 
 
-// TODO Add all points from a single USGS GeoJSON file into OL
-    // Create a point from a given event
-        // Point opacity corresponds to event time away from current time, opaque smaller number
-        // Reproject the point for display
-    // Create callout box on click
-        // Show magnitude of event
-        // Show date of event
-
+// TODO Modify point opacity corresponds to event time away from current time, opaque smaller number
 // TODO animate "new" earthquakes somehow
 // TODO create a project readme
