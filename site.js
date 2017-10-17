@@ -80,7 +80,7 @@ var styles = {
     }),
     '40': new ol.style.Style({
         image: new ol.style.Circle({
-            radius: 10,
+            radius: 14,
             fill: new ol.style.Fill({color: '#bada55'}),
             stroke: new ol.style.Stroke({color: '#666666', width: 2})
         })
